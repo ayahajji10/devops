@@ -1,0 +1,39 @@
+---
+- name: Configure Application Servers
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker
+      package:
+        name: docker.io
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.17.2/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create monitoring directory
+      file:
+        path: /opt/monitoring
+        state: directory
+        mode: '0755'
+
+    - name: Copy Prometheus configuration
+      copy:
+        src: ../monitoring/prometheus/prometheus.yml
+        dest: /opt/monitoring/prometheus.yml
+        mode: '0644' 
